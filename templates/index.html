@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UltraAI - Comprehensive AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('/templates/hacker.jpg') center/cover fixed no-repeat;
+            color: #e0e0e0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 46, 0.6);
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .login-modal.show {
+            display: flex;
+        }
+        
+        .login-box {
+            background: #0f3460;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e94560;
+        }
+        
+        .login-box h1 {
+            margin-bottom: 20px;
+            color: #e94560;
+        }
+        
+        .login-box input {
+            width: 300px;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #e94560;
+            border-radius: 5px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+        
+        .login-box button {
+            padding: 12px 30px;
+            margin-top: 20px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .login-box button:hover {
+            background: #d63a52;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: #0f3460;
+            border-right: 2px solid #e94560;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e94560;
+            background: #16213e;
+        }
+        
+        .sidebar-header h2 {
+            color: #e94560;
+            font-size: 18px;
+        }
+        
+        .new-chat-btn {
+            margin: 15px;
+            padding: 10px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: calc(100% - 30px);
+        }
+        
+        .new-chat-btn:hover {
+            background: #d63a52;
+        }
+        
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .chat-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #1a1a2e;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .chat-item:hover {
+            background: #16213e;
+        }
+        
+        .chat-item.active {
+            background: #e94560;
+            color: white;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #16213e;
+            padding: 20px;
+            border-bottom: 2px solid #e94560;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #e94560;
+        }
+        
+        .user-info {
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-content {
+            background: #e94560;
+            color: white;
+        }
+        
+        .message.ai .message-content {
+            background: #0f3460;
+            color: #e0e0e0;
+            border: 1px solid #e94560;
+        }
+        
+        .input-area {
+            padding: 20px;
+            background: #16213e;
+            border-top: 2px solid #e94560;
+            display: flex;
+            gap: 10px;
+        }
+        
+        #message-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e94560;
+            border-radius: 5px;
+            background: #0f3460;
+            color: #e0e0e0;
+            resize: none;
+            max-height: 100px;
+        }
+        
+        #message-input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+        
+        .send-btn {
+            padding: 12px 25px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .send-btn:hover {
+            background: #d63a52;
+        }
+        
+        .send-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #e94560;
+            padding: 20px;
+        }
+        
+        pre {
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            color: #00ff00;
+            border-left: 3px solid #e94560;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+        }
+        
+        code.command {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        code.command:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-modal" id="loginModal">
+        <div class="login-box">
+            <h1>UltraAI</h1>
+            <p>Comprehensive AI Assistant</p>
+            <input type="text" id="username-input" placeholder="Enter your name" autocomplete="off">
+            <button onclick="handleLogin()">Start Chatting</button>
+        </div>
+    </div>
+    
+    <div class="container" id="mainContainer" style="display: none;">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>UltraAI</h2>
+                <p style="font-size: 12px; color: #888; margin-top: 5px;">General Knowledge AI</p>
+            </div>
+            <div style="display: flex; gap: 10px; padding: 15px;">
+                <button class="new-chat-btn" onclick="createNewChat()" style="margin: 0; flex: 1;">New Chat</button>
+                <button class="new-chat-btn" onclick="switchToTerminal()" id="terminalBtn" style="margin: 0; flex: 1; background: #16213e; border: 1px solid #e94560;">Terminal</button>
+            </div>
+            <div class="chat-list" id="chatList"></div>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h1 id="chatTitle">UltraAI Assistant</h1>
+                <div class="user-info" id="userInfo"></div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer"></div>
+            
+            <div class="input-area">
+                <textarea id="message-input" placeholder="Ask me anything... tools, history, general knowledge, programming, etc." rows="2"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="terminalContainer" style="display: none; flex-direction: column; height: 100vh; background: #0a0e27;">
+        <div style="background: #16213e; padding: 15px; border-bottom: 2px solid #e94560; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="color: #e94560; margin: 0;">Terminal</h2>
+            <button onclick="switchToChat()" style="padding: 8px 15px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Back to Chat</button>
+        </div>
+        <div id="terminalOutput" style="flex: 1; background: #0a0e27; color: #ffffff; overflow-y: auto; padding: 20px; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold; white-space: pre-wrap; word-wrap: break-word; line-height: 1.6;">
+        </div>
+        <div style="background: #16213e; padding: 15px; border-top: 1px solid #333;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span style="color: #00ff00; font-weight: bold; font-size: 16px; font-family: 'Courier New', monospace;">exploitdev@ultraai:~$</span>
+                <input id="terminalInput" type="text" placeholder="Enter command..." style="flex: 1; background: #0a0e27; color: #ffffff; border: 2px solid #00ff00; padding: 10px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold;" onkeypress="if(event.key==='Enter') executeTerminalCommand()">
+                <button onclick="executeTerminalCommand()" style="padding: 10px 20px; background: #00ff00; color: #0a0e27; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 14px;">Execute</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentChatId = null;
+        let username = '';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserSession();
+        });
+        
+        async function checkUserSession() {
+            try {
+                const response = await fetch('/api/get_user_info', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    username = data.username;
+                    showMainApp();
+                    loadChats();
+                } else {
+                    showLoginModal();
+                }
+            } catch (err) {
+                console.error('Session check error:', err);
+                showLoginModal();
+            }
+        }
+        
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('show');
+        }
+        
+        function showMainApp() {
+            document.getElementById('loginModal').classList.remove('show');
+            document.getElementById('mainContainer').style.display = 'flex';
+            document.getElementById('userInfo').textContent = 'User: ' + username;
+        }
+        
+        async function handleLogin() {
+            const username_input = document.getElementById('username-input').value.trim();
+            if (!username_input) return;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username_input }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    username = data.username;
+                    showMainApp();
+                    loadChats();
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+            }
+        }
+        
+        async function loadChats() {
+            try {
+                const response = await fetch('/api/chats', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                const chatList = document.getElementById('chatList');
+                chatList.innerHTML = '';
+                
+                if (data.chats && data.chats.length > 0) {
+                    data.chats.forEach(chat => {
+                        const div = document.createElement('div');
+                        div.className = 'chat-item';
+                        div.textContent = chat.title;
+                        div.onclick = () => selectChat(chat.chat_id);
+                        chatList.appendChild(div);
+                    });
+                    selectChat(data.chats[0].chat_id);
+                }
+            } catch (err) {
+                console.error('Load chats error:', err);
+            }
+        }
+        
+        async function createNewChat() {
+            try {
+                const response = await fetch('/api/chat/new', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: 'New Chat', category: 'general' }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    loadChats();
+                    selectChat(data.chat_id);
+                }
+            } catch (err) {
+                console.error('Create chat error:', err);
+            }
+        }
+        
+        async function selectChat(chatId) {
+            currentChatId = chatId;
+            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('messagesContainer').innerHTML = '';
+            document.getElementById('message-input').value = '';
+            
+            try {
+                const response = await fetch(`/api/chat/${chatId}/messages`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.messages) {
+                    data.messages.forEach(msg => {
+                        displayMessage(msg.content, msg.sender);
+                    });
+                }
+            } catch (err) {
+                console.error('Load messages error:', err);
+            }
+        }
+        
+        function displayMessage(content, sender) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + sender;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = formatMessage(content);
+            
+            messageDiv.appendChild(contentDiv);
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function formatMessage(text) {
+            let formatted = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/```bash\n([\s\S]*?)```/g, '<pre><code class="command" onclick="copyAndExecuteCommand(this)">$1</code></pre>')
+                .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                .replace(/\n/g, '<br>');
+            return formatted;
+        }
+        
+        function copyAndExecuteCommand(codeElement) {
+            const command = codeElement.textContent.trim();
+            const terminalInput = document.getElementById('terminalInput');
+            if (terminalInput) {
+                terminalInput.value = command;
+                codeElement.style.cursor = 'pointer';
+                codeElement.style.opacity = '0.7';
+                setTimeout(() => codeElement.style.opacity = '1', 200);
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || !currentChatId) return;
+            
+            input.value = '';
+            displayMessage(message, 'user');
+            
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/chat/${currentChatId}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message }),
+                    credentials: 'include'
+                });
+                
+                const container = document.getElementById('messagesContainer');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message ai';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = '<div class="loading">Thinking...</div>';
+                
+                messageDiv.appendChild(contentDiv);
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+                
+                let fullResponse = '';
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    fullResponse += decoder.decode(value, { stream: true });
+                    contentDiv.innerHTML = formatMessage(fullResponse);
+                    container.scrollTop = container.scrollHeight;
+                }
+                
+            } catch (err) {
+                console.error('Send message error:', err);
+                displayMessage('Error communicating with AI', 'ai');
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+        
+        
+        function switchToTerminal() {
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('terminalContainer').style.display = 'flex';
+            document.getElementById('terminalInput').focus();
+        }
+        
+        function switchToChat() {
+            document.getElementById('terminalContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'flex';
+        }
+        
+        function stripAnsiCodes(text) {
+            return text.replace(/\x1b\[[0-9;]*[mGKHflSTABCDE]/g, '');
+        }
+        
+        async function executeTerminalCommand() {
+            const input = document.getElementById('terminalInput');
+            const executeBtn = document.querySelector('#terminalContainer button[onclick="executeTerminalCommand()"]');
+            const command = input.value.trim();
+            
+            if (!command) return;
+            
+            executeBtn.disabled = true;
+            executeBtn.style.opacity = '0.5';
+            
+            const output = document.getElementById('terminalOutput');
+            
+            if (command === 'clear' || command === 'cls') {
+                output.innerHTML = '';
+                executeBtn.disabled = false;
+                executeBtn.style.opacity = '1';
+                input.value = '';
+                return;
+            }
+            
+            output.innerHTML += `<span style="color: #00ff00; font-weight: bold;">exploitdev@ultraai:~$ ${command}</span>\n`;
+            
+            try {
+                const response = await fetch('/api/terminal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command }),
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    const cleanOutput = stripAnsiCodes(result.output);
+                    output.innerHTML += `<span style="color: #ffffff; font-weight: bold;">${cleanOutput}</span>\n`;
+                } else {
+                    output.innerHTML += `<span style="color: #ff6b6b; font-weight: bold;">Error: ${result.error}</span>\n`;
+                }
+            } catch (err) {
+                output.innerHTML += `<span style="color: #ff6b6b; font-weight: bold;">Error: ${err.message}</span>\n`;
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.style.opacity = '1';
+            }
+            
+            output.scrollTop = output.scrollHeight;
+            input.value = '';
+        }
+        
+        document.getElementById('message-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
